@@ -12,6 +12,10 @@
 
 ## Usage
 
+
+
+### Train
+
 1. get into the main folder:
 
    ```shell
@@ -30,5 +34,27 @@
    sh run_train_attention_multi_label.sh
    ```
 
-   
 
+
+
+### Inference
+
+1. get into the test_offline folder:
+
+   ```shell
+   cd ../test_offline/
+   ```
+
+2. get inference results:
+
+   ```shell
+   python3 test_on_cpu_total.py 
+   ```
+
+3. Calculate the mAP & FP & FN & TP & TN:
+
+   ```shell
+   python3 calc_pre_recall.py
+   ```
+
+   
