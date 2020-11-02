@@ -12,7 +12,7 @@ This repository is the official PyTorch implementation of paper [Multi-label X-r
 
 ## Pretrain model
 
- [Baidu Cloud](链接:https://pan.baidu.com/s/1KrhhagaNeonQ6tLa5Qj05Q)      password: wf3d
+ [Baidu Cloud](https://pan.baidu.com/s/1KrhhagaNeonQ6tLa5Qj05Q)      password: wf3d
 
 download the pretrain model and put it into the `test_offline` folder.
 
