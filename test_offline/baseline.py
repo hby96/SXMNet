@@ -3,108 +3,6 @@ from torch import nn
 from torchvision import models
 import torch.nn.functional as F
 
-# class My_Siamese(nn.Module):
-#     def __init__(self, num_classes=8, pretrained=True):
-#         super(My_Siamese, self).__init__()
-#         self.backbone = nn.Sequential(*list(models.resnet50(pretrained).children())[:-2]) # output 7*7 feature map
-#
-#         self.gap = torch.nn.AdaptiveAvgPool2d((1, 1))
-#         self.gmp = torch.nn.AdaptiveMaxPool2d((1, 1))
-#
-#         self.fc = nn.Linear(4096, num_classes)
-#
-#     def forward(self, top, side, epoch):
-#         """
-#             Returns:
-#               local_feat_list: each member with shape [N, c]
-#               logits_list: each member with shape [N, num_classes]
-#             """
-#         # Bottom-up
-#         top_output = self.backbone(top)
-#         top_gap_fea = self.gap(top_output).view(top_output.shape[0], -1)
-#
-#         side_output = self.backbone(side)
-#         side_gap_fea = self.gap(side_output).view(side_output.shape[0], -1)
-#
-#         final_fea = torch.cat([top_gap_fea, side_gap_fea], dim=1)
-#         logit = self.fc(final_fea)
-#         return logit
-
-
-class My_Res50(nn.Module):
-    def __init__(self, num_classes=5, pretrained=True):
-        super(My_Res50, self).__init__()
-
-        self.resnet = models.resnet50(pretrained)  # resnst 50
-        # self.resnet = models.resnet101(pretrained)  # resnst 101
-
-        # Feature extractor
-        self.layer1 = nn.Sequential(*list(self.resnet.children())[:-5])  # output 56*56 feature map
-        self.layer2 = nn.Sequential(*list(self.resnet.children())[-5])  # output 28*28 feature map
-        self.layer3 = nn.Sequential(*list(self.resnet.children())[-4])  # output 14*14 feature map
-        self.layer4 = nn.Sequential(*list(self.resnet.children())[-3])  # output 7*7 feature map
-
-        self.gap = torch.nn.AdaptiveAvgPool2d((1, 1))
-        self.gmp = torch.nn.AdaptiveMaxPool2d((1, 1))
-
-        self.fc = nn.Linear(2048, num_classes)
-
-    def forward(self, x, epoch):
-        """
-            Returns:
-              local_feat_list: each member with shape [N, c]
-              logits_list: each member with shape [N, num_classes]
-            """
-        # Bottom-up
-        layer1_fea = self.layer1(x)
-        layer2_fea = self.layer2(layer1_fea)
-        layer3_fea = self.layer3(layer2_fea)  # shape [N, C, H, W]
-        layer4_fea = self.layer4(layer3_fea)
-
-        gap_fea = self.gap(layer4_fea)
-        logit = self.fc(gap_fea.view(gap_fea.shape[0], -1))
-        # gap_fea = self.gap(layer4_fea).view(layer4_fea.shape[0], -1)
-        # gmp_fea = self.gmp(layer4_fea).view(layer4_fea.shape[0], -1)
-        # final_fea = torch.cat([gap_fea, gmp_fea], dim=1)
-        # logit = self.fc(final_fea)
-
-        return logit
-
-
-class My_Siamese(nn.Module):
-    def __init__(self, num_classes=8, pretrained=True):
-        super(My_Siamese, self).__init__()
-        self.backbone = nn.Sequential(*list(models.resnet50(pretrained).children())[:-2])  # output 7*7 feature map
-
-        self.gap = torch.nn.AdaptiveAvgPool2d((1, 1))
-        self.gmp = torch.nn.AdaptiveMaxPool2d((1, 1))
-
-        self.top_fc = nn.Linear(2048, num_classes)
-        self.side_fc = nn.Linear(2048, num_classes)
-        self.total_fc = nn.Linear(4096, num_classes)
-        nn.init.kaiming_normal_(self.top_fc.weight)
-        nn.init.kaiming_normal_(self.side_fc.weight)
-        nn.init.kaiming_normal_(self.total_fc.weight)
-
-    def forward(self, top, side, epoch):
-        """
-            Returns:
-              local_feat_list: each member with shape [N, c]
-              logits_list: each member with shape [N, num_classes]
-            """
-        # Bottom-up
-        top_output = self.backbone(top)
-        top_gap_fea = self.gap(top_output).view(top_output.shape[0], -1)
-        top_logit = self.top_fc(top_gap_fea)
-
-        side_output = self.backbone(side)
-        side_gap_fea = self.gap(side_output).view(side_output.shape[0], -1)
-        side_logit = self.side_fc(side_gap_fea)
-
-        final_fea = torch.cat([top_gap_fea, side_gap_fea], dim=1)
-        total_logit = self.total_fc(final_fea)
-        return top_logit, side_logit, total_logit
-
 
 def _make_layers(cfg, in_channels=3, batch_norm=False, dilation=False):
     if dilation:
@@ -126,12 +24,11 @@ def _make_layers(cfg, in_channels=3, batch_norm=False, dilation=False):
 
 
 class My_Counting_Net_Insight_Gated(nn.Module):
-    def __init__(self, num_classes=1000, pretrained=True):
+    def __init__(self, num_classes=1000, backbone='resnet50', pretrained=True):
         super(My_Counting_Net_Insight_Gated, self).__init__()
 
-        # self.resnet = models.resnet50(pretrained)  # resnst 50
-        self.resnet = models.resnet101(pretrained)  # resnst 50
-        # self.resnet = models.resnet152(pretrained)  # resnst 50
+        self.backbone = backbone
+        self.resnet = eval("models.{}".format(backbone))(pretrained)
 
         # Feature extractor
         self.layer1 = nn.Sequential(*list(self.resnet.children())[:-5])  # output 56*56 feature map
@@ -189,7 +86,7 @@ class My_Counting_Net_Insight_Gated(nn.Module):
         z = F.upsample(x, size=(H, W), mode='bilinear')
         return z + y
 
-    def forward(self, x, epoch):
+    def forward(self, x):
         """
             Returns:
               local_feat_list: each member with shape [N, c]
@@ -235,22 +132,31 @@ class My_Counting_Net_Insight_Gated(nn.Module):
         p3 = p3 * ht_map_14
         p2 = p2 * ht_map_28
 
-        # # select head
-        # ga_fea = torch.cat([p4, self.avgpool2d(p3), self.avgpool2d(self.avgpool2d(p2))], dim=1)
-        # ga_fea = self.gated_net(ga_fea)
-        # gated_weight = torch.softmax(self.ga_fc(ga_fea.view(ga_fea.shape[0], -1)), dim=1)
+        if self.backbone == 'resnet101':
+            gap_p4 = self.gap(p4)
+            gap_p3 = self.gap(p3)
+            gap_p2 = self.gap(p2)
 
-        gap_p4 = self.gap(p4)
-        gap_p3 = self.gap(p3)
-        gap_p2 = self.gap(p2)
+            p4_logit = self.fc_1(gap_p4.view(gap_p4.shape[0], -1))
+            p3_logit = self.fc_2(gap_p3.view(gap_p3.shape[0], -1))
+            p2_logit = self.fc_3(gap_p2.view(gap_p2.shape[0], -1))
+        else:
+            # select head
+            ga_fea = torch.cat([p4, self.avgpool2d(p3), self.avgpool2d(self.avgpool2d(p2))], dim=1)
+            ga_fea = self.gated_net(ga_fea)
+            gated_weight = torch.softmax(self.ga_fc(ga_fea.view(ga_fea.shape[0], -1)), dim=1)
 
-        p4_logit = self.fc_1(gap_p4.view(gap_p4.shape[0], -1))
-        p3_logit = self.fc_2(gap_p3.view(gap_p3.shape[0], -1))
-        p2_logit = self.fc_3(gap_p2.view(gap_p2.shape[0], -1))
+            gap_p4 = self.gap(p4)
+            gap_p3 = self.gap(p3)
+            gap_p2 = self.gap(p2)
 
-        # p4_logit = p4_logit * gated_weight[:, 0].view(gated_weight.shape[0], 1)
-        # p3_logit = p3_logit * gated_weight[:, 1].view(gated_weight.shape[0], 1)
-        # p2_logit = p2_logit * gated_weight[:, 2].view(gated_weight.shape[0], 1)
+            p4_logit = self.fc_1(gap_p4.view(gap_p4.shape[0], -1))
+            p3_logit = self.fc_2(gap_p3.view(gap_p3.shape[0], -1))
+            p2_logit = self.fc_3(gap_p2.view(gap_p2.shape[0], -1))
+
+            p4_logit = p4_logit * gated_weight[:, 0].view(gated_weight.shape[0], 1)
+            p3_logit = p3_logit * gated_weight[:, 1].view(gated_weight.shape[0], 1)
+            p2_logit = p2_logit * gated_weight[:, 2].view(gated_weight.shape[0], 1)
 
         final_logit = p4_logit + p3_logit + p2_logit
 

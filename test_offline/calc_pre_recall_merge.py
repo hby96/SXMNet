@@ -2,9 +2,9 @@ import json
 import numpy as np
 from mean_average_precisioin import AveragePrecisionMeter
 
-object_categories = ['battery', 'bottle', 'firecracker', 'grenade', 'gun', 'hammer', 'knife', 'scissors']
+object_categories = ['battery', 'bottle', 'firecracker', 'grenade', 'gun', 'hammer', 'merge_knife']
 
-result_save_path = 'test.json'
+result_save_path = 'test_merge.json'
 
 
 def main():
@@ -26,10 +26,10 @@ def main():
 
         ap_meter.add(np.array(pred, dtype=float).reshape(1, len(object_categories)), np.array(label, dtype=float).reshape(1, len(object_categories)))
 
-        thre = np.array([0.5, 0.5, 0.5, 0.3, 0.5, 0.5, 0.7, 0.5])
-        # pred = np.array(pred, dtype=float) > thre
-
         pred = np.array(pred, dtype=float) > 0.5
+
+        # thre = np.array([0.5, 0.5, 0.5, 0.3, 0.5, 0.5, 0.7, 0.5])
+        # pred = np.array(pred, dtype=float) > thre
 
 
         for col in range(len(object_categories)):
@@ -55,7 +55,7 @@ def main():
         elif np.array(label).sum() < 1.0 and pred.sum() < 0.95:
             two_cls_TN += 1
 
-    print('wrong num:', wrong_num)
+    print('wrong_num:', wrong_num)
     print('TP:', TP)
     print('FP:', FP)
     print('FN:', FN)

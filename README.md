@@ -48,13 +48,13 @@
 2. get inference results:
 
    ```shell
-   python3 test_on_cpu_total.py 
+   python3 test_on_cpu_total_merge.py 
    ```
 
 3. Calculate the mAP & FP & FN & TP & TN:
 
    ```shell
-   python3 calc_pre_recall.py
+   python3 calc_pre_recall_merge.py
    ```
 
    

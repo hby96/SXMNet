@@ -8,28 +8,28 @@ sys.path.append('../')
 
 from tqdm import tqdm
 from baseline import My_Counting_Net_Insight_Gated
-from folder import MyFolder
-
+from merge_folder import MyFolder
+# from only_image_folder import MyFolder
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 
 
-object_categories = ['battery', 'bottle', 'firecracker', 'grenade', 'gun', 'hammer', 'knife', 'scissors']
+object_categories = ['battery', 'bottle', 'firecracker', 'grenade', 'gun', 'hammer', 'merge_knife']
 
-model_path = '224_resnet50.ckpt'
+model_path = '448_resnet101_merge.ckpt'
 
 test_set_path = '/data0/hby/datasets/Top_View_Xray/total_test_imgs'
 
-result_save_path = 'test.json'
+result_save_path = 'test_merge.json'
 
 
 def prepare_data(test_set_path):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
     test_transform = transforms.Compose([
-        transforms.Resize((256, 256)),
-        transforms.CenterCrop(224),
+        transforms.Resize((512, 512)),
+        transforms.CenterCrop(448),
         transforms.ToTensor(),
         normalize,
         ])
@@ -53,6 +53,7 @@ def eval_model(test_loader, model):
             if torch.cuda.is_available():
                 data = data.cuda()
                 target = target.cuda()
+            # logit = model(data, batch_idx)
             logit = model(data)
 
             pred = torch.sigmoid(logit)
@@ -79,8 +80,13 @@ def main():
     if torch.cuda.is_available():
         model = model.cuda()
     checkpoint = torch.load(model_path, map_location='cpu')
-    model.load_state_dict(checkpoint['state_dict'])
 
+    new_checkpoint = dict()
+    for k, v in checkpoint['state_dict'].items():
+        new_checkpoint[k.replace('module.', '')] = v
+    model.load_state_dict(new_checkpoint)
+
+    # model = torch.jit.load('224_res50_gf_xray_model.tjm')
     # Save wrong cases
     eval_model(test_loader, model)
 
