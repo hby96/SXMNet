@@ -1,6 +1,6 @@
 # Multi-label X-ray Imagery Classification via Bottom-up Attention and Meta Fusion 
 
-
+This repository is the official PyTorch implementation of paper [Multi-label X-ray Imagery Classification via Bottom-up Attention and Meta Fusion](https://hby96.github.io/_pages/pdfs/Multi-label_X-ray_Imagery_Classification_via_Bottom-up_Attention_and_Meta_Fusion_ACCV2020.pdf?raw=true). (The work has been accepted by ACCV 2020)
 
 ## Main Requirements
 
@@ -10,9 +10,15 @@
 
 
 
+## Pretrain model
+
+ [Baidu Cloud](链接:https://pan.baidu.com/s/1KrhhagaNeonQ6tLa5Qj05Q)      password: wf3d
+
+download the pretrain model and put it into the `test_offline` folder.
+
+
+
 ## Usage
-
-
 
 ### Train
 
@@ -33,8 +39,6 @@
    ```shell
    sh run_train_attention_multi_label.sh
    ```
-
-
 
 
 ### Inference
@@ -58,3 +62,20 @@
    ```
 
    
+
+## Citation
+
+If you find this work is helpful, please cite this paper.
+
+```
+@inproceedings{Hu2020Xray,
+  author    = {Benyi Hu and Chi Zhang and Le Wang and
+               Qilin Zhang and Yuehu Liu},
+  title     = {Multi-label X-ray Imagery Classification via Bottom-up Attention and Meta Fusion},
+  booktitle = {15th Asian Conference on Computer Vision, ({ACCV})},
+  year      = {2020},
+}
+
+```
+
+## 
